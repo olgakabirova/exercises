@@ -41,7 +41,6 @@ module Lecture2
     ) where
 import Data.List ( dropWhileEnd )
 import Data.Char ( isSpace )
-import Control.Arrow (Arrow(first))
 
 {- | Implement a function that finds a product of all the numbers in
 the list. But implement a lazier version of this function: if you see
@@ -51,14 +50,9 @@ zero, you can stop calculating product and return 0 immediately.
 84
 -}
 lazyProduct :: [Int] -> Int
-lazyProduct list = go list 1
-  where
-    go :: [Int] -> Int -> Int
-    go [] result = result
-    go (0 : _) _ = 0
-    go (x: xs) result = go xs x * result
-
-
+lazyProduct  []       = 1
+lazyProduct  (0 : _)  = 0
+lazyProduct  (x: xs)  = x * lazyProduct xs
 
 {- | Implement a function that duplicates every element in the list.
 
@@ -118,7 +112,7 @@ spaces.
 🕯 HINT: look into Data.Char and Prelude modules for functions you may use.
 -}
 dropSpaces :: String -> String
-dropSpaces =  dropWhileEnd isSpace . dropWhile isSpace
+dropSpaces =  takeWhile (not . isSpace) . dropWhile isSpace
 
 {- |
 
@@ -172,8 +166,8 @@ You're free to define any helper functions.
 -}
 
 newtype Health = MkHealth Int
-newtype Attack = MkAttack Int 
-newtype Endurance = MkEndurance Int 
+newtype Attack = MkAttack Int
+newtype Endurance = MkEndurance Int
 -- some help in the beginning ;)
 data Knight = Knight
     { knightHealth    :: Health
@@ -185,21 +179,21 @@ data Color = Red
     |Black
 
 
-newtype FirePower = MkFirePower Int 
+newtype FirePower = MkFirePower Int
 
 data Dragon = Dragon
     { dragonType :: Color,
       dragonFirePower :: FirePower
-    }  
+    }
 
 newtype Gold = MkGold Int
 newtype Treasure = MkTreasure Int
 
-data Chest =  Chest 
+data Chest =  Chest
     {
       chestGold :: Gold,
       chestTreasure :: Maybe [Treasure]
-    } 
+    }
 
 
 
@@ -229,7 +223,7 @@ True
 isIncreasing :: [Int] -> Bool
 isIncreasing [] = True
 isIncreasing [_] = True
-isIncreasing (x:y:xs) = x <= y && isIncreasing (y:xs) 
+isIncreasing (x:y:xs) = x <= y && isIncreasing (y:xs)
 
 
 {- | Implement a function that takes two lists, sorted in the
@@ -245,7 +239,10 @@ verify that.
 merge :: [Int] -> [Int] -> [Int]
 merge xs     []     = xs
 merge []     ys     = ys
-merge (x:xs) (y:ys) = if x < y then x : merge xs (y:ys) else y : merge (x:xs) ys
+merge (x:xs) (y:ys)
+  | x < y     = x : merge xs (y:ys)
+  | x == y    = x:y: merge xs ys
+  | otherwise = y : merge (x:xs) ys
 
 {- | Implement the "Merge Sort" algorithm in Haskell. The @mergeSort@
 function takes a list of numbers and returns a new list containing the
@@ -265,13 +262,13 @@ mergeSort :: [Int] -> [Int]
 mergeSort []  = []
 mergeSort [x] = [x]
 mergeSort xs  = merge firstHalfSorted secondHalfSorted
-  where 
+  where
     half           = splitAt (length xs `div` 2) xs
-    firstHalfSorted  = mergeSort (fst half) 
+    firstHalfSorted  = mergeSort (fst half)
     secondHalfSorted = mergeSort (snd half)
-    
 
-  
+
+
 
 
 {- | Haskell is famous for being a superb language for implementing
@@ -325,25 +322,25 @@ It returns either a successful evaluation result or an error.
 -}
 eval :: Variables -> Expr -> Either EvalError Int
 eval _ (Lit n) = Right n
-eval vars (Var x) = 
-  case lookup x vars  of 
+eval vars (Var x) =
+  case lookup x vars  of
     Nothing -> Left (VariableNotFound x)
     Just a -> Right a
 eval vars (Add left right) = sumEither (eval vars left)  (eval vars right)
-  where 
+  where
     sumEither :: Either EvalError Int -> Either EvalError Int -> Either EvalError Int
     sumEither first second =
-      case first of 
-        Left err1 -> 
-          case second of 
+      case first of
+        Left err1 ->
+          case second of
                         Left err2 -> Left err2
                         Right _ -> Left err1
-        Right a -> 
-          case second of 
-                        Left err -> Left err 
-                        Right b -> Right (a + b) 
+        Right a ->
+          case second of
+                        Left err -> Left err
+                        Right b -> Right (a + b)
 
-  
+
 
 {- | Compilers also perform optimizations! One of the most common
 optimizations is "Constant Folding". It performs arithmetic operations
