@@ -367,4 +367,21 @@ Write a function that takes and expression and performs "Constant
 Folding" optimization on the given expression.
 -}
 constantFolding :: Expr -> Expr
-constantFolding expr = error "TODO"
+constantFolding expr
+  | null (snd variables) =
+    Lit literal
+  | literal /= 0 = Add (Lit literal) result
+  | otherwise = result
+  where
+      variables = go expr (0, [])
+      literal = fst variables
+      result = convert (snd variables)
+      go :: Expr -> (Int, [String]) -> (Int, [String])
+      go expression (lits, vars)
+        = case expression of
+                Lit n -> (lits + n, vars)
+                Var x -> (lits, x : vars)
+                Add expr1 expr2 ->  (fst (go expr1 (lits, vars))  + fst (go expr2 (lits, vars)), snd (go expr1 (lits, vars)) ++ snd (go expr2 (lits, vars)))
+      convert :: [String] -> Expr
+      convert [x] = Var x
+      convert (x : xs) = Add (Var x) (convert xs)
